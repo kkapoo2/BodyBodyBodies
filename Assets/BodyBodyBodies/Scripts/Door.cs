@@ -22,7 +22,7 @@ public class Door : MonoBehaviour
         {
             stayTime += Time.deltaTime;
 
-            if(stayTime >= 3f)
+            if(stayTime >= 2f)
             {
                 GameManager.Instance.NextStage();
             }

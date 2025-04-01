@@ -4,32 +4,26 @@ public class AutoBlock : MonoBehaviour
 {
     public float moveX = 0.0f;
     public float moveY = 0.0f;
+
     public float times = 0.0f;
     public float weight = 0.0f;
+
     public bool isMoveWhenOn = false;
-
-
     public bool isCanMove = true;
+
     float perDX;
     float perDY;
     Vector3 defPos;
     bool isReverse = false;
     void Start()
     {
-        defPos = transform.position;
+        defPos = transform.position;    // 초기 위치 저장
         float timestep = Time.fixedDeltaTime;
-        perDX = moveX / (1.0f / timestep * times);
+        perDX = moveX / (1.0f / timestep * times); // 이동 속도 설정
         perDY = moveY / (1.0f / timestep * times);
 
         if (isMoveWhenOn)
             isCanMove = false;
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-
-
     }
 
     private void FixedUpdate()
@@ -42,6 +36,7 @@ public class AutoBlock : MonoBehaviour
             float y = transform.position.y;
             bool endX = false;
             bool endY = false;
+
             if (isReverse)
             {
                 if ((perDX >= 0.0f && x <= defPos.x) || (perDX < 0.0f && x >= defPos.x))

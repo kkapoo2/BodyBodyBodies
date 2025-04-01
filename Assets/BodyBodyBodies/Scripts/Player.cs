@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -10,7 +11,7 @@ public class Player : MonoBehaviour
 
     Rigidbody2D rigid;
     SpriteRenderer spriteRenderer;
-    Animator anim;
+    public Animator anim;
 
 
     public GameObject selfCorpse;
@@ -94,12 +95,24 @@ public class Player : MonoBehaviour
         //착지시 점프 상태 해제
         if (rigid.linearVelocity.y < 0)
         {
+            Debug.DrawRay(rigid.position, Vector3.down, new Color(0, 1, 0));
+
             RaycastHit2D rayHit = Physics2D.Raycast(rigid.position, Vector3.down, 1.2f, LayerMask.GetMask("Ground"));
+
             if (rayHit.collider != null)
             {
-                if (rayHit.distance < 0.3f)
+                if (rayHit.distance < 0.5f)
                     anim.SetBool("isJumping", false);
             }
+        }
+    }
+
+    //장애물 접촉
+    void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (collision.gameObject.tag == "Obstacle")
+        {
+            OnDamaged(collision.transform.position);
         }
     }
 
@@ -107,32 +120,74 @@ public class Player : MonoBehaviour
     public void SelfDie()
     {
         //시체 생성
-        Instantiate(selfCorpse, transform.position, Quaternion.identity); 
+        GameObject corpse = Instantiate(selfCorpse, transform.position, Quaternion.identity); 
 
         //시체를 CorpseManager의 자식으로 설정
         GameObject corpseManager = GameObject.Find("Corpse Manager");
         if (corpseManager != null)
         {
-            selfCorpse.transform.parent = corpseManager.transform;
+            corpse.transform.SetParent(corpseManager.transform, true);
         }
 
-        //플레이어 리스폰
-        gameManager.PlayerReposition();
+        //투명화 해제
+        Invoke("OffDamaged", 0.5f);
+
+        //1초 뒤 플레이어 리스폰
+        Invoke("RespawnPlayer", 0.5f);
     }
 
     //장애물로 사망(가시,화살)
     public void ObstacleDie()
     {
-        Instantiate(obstacleCorpse, transform.position, Quaternion.identity); //시체 생성
+        GameObject corpse = Instantiate(obstacleCorpse, transform.position, Quaternion.identity); //시체 생성
+        
         //시체를 CorpseManager의 자식으로 설정
         GameObject corpseManager = GameObject.Find("Corpse Manager");
         if (corpseManager != null)
         {
-            obstacleCorpse.transform.parent = corpseManager.transform;
+            corpse.transform.SetParent(corpseManager.transform, true);
         }
 
-        //플레이어 리스폰
+        //투명화 해제
+        Invoke("OffDamaged", 0.5f);
+
+        //1초 뒤 플레이어 리스폰
+        Invoke("RespawnPlayer", 0.5f);
+    }
+
+    
+    // 플레이어 리스폰 실행 함수\
+    void RespawnPlayer()
+    {
         gameManager.PlayerReposition();
+    }
+
+    void OnDamaged(Vector2 targetPos)
+    {
+        // Change Layer (Imoratal Active)
+        gameObject.layer = 11;
+
+        // View Alpha
+        spriteRenderer.color = new Color(1, 1, 1, 0.4f);
+
+        //Reaction Force
+        int dirc = transform.position.x - targetPos.x > 0 ? 1 : -1;
+        rigid.AddForce(new Vector2(dirc, 1) * 7, ForceMode2D.Impulse);
+
+        //Animation
+        anim.SetTrigger("doDamaged");
+
+        //시체 생성
+        ObstacleDie();
+
+        
+
+    }
+
+    void OffDamaged()
+    {
+        gameObject.layer = 9;
+        spriteRenderer.color = new Color(1, 1, 1, 1);
     }
 
     //아이템 감지
@@ -176,17 +231,5 @@ public class Player : MonoBehaviour
     public void VelocityZero()
     {
         rigid.linearVelocity = Vector2.zero;
-    }
-
-    private void OnCollisionEnter2D(Collision2D collision)
-    {
-        if (collision.gameObject.CompareTag("Ground"))
-        {
-            anim.SetBool("isJumping", false);
-        }
-        else if (collision.gameObject.CompareTag("Corpse"))
-        {
-            anim.SetBool("isJumping", false);
-        }
     }
 }
