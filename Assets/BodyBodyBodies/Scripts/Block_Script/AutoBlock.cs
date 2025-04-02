@@ -8,8 +8,7 @@ public class AutoBlock : MonoBehaviour
     public float times = 0.0f;
     public float weight = 0.0f;
 
-    public bool isMoveWhenOn = false;
-    public bool isCanMove = true;
+    public bool isCanMove = false;
 
     float perDX;
     float perDY;
@@ -22,13 +21,10 @@ public class AutoBlock : MonoBehaviour
         perDX = moveX / (1.0f / timestep * times); // 이동 속도 설정
         perDY = moveY / (1.0f / timestep * times);
 
-        if (isMoveWhenOn)
-            isCanMove = false;
     }
 
     private void FixedUpdate()
     {
-
 
         if (isCanMove)
         {
@@ -71,15 +67,10 @@ public class AutoBlock : MonoBehaviour
                 }
                 isReverse = !isReverse;
                 isCanMove = false;
-                if (isMoveWhenOn == false)
-                {
-                    Invoke("Move", weight);
-                }
             }
         }
 
     }
-
 
     public void Move()
     {
@@ -96,10 +87,7 @@ public class AutoBlock : MonoBehaviour
         if (collision.gameObject.tag == "Player")
         {
             collision.transform.SetParent(transform);
-            if (isMoveWhenOn)
-            {
-                isCanMove = true;
-            }
+            
         }
     }
 
