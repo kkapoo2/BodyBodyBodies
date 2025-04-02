@@ -1,4 +1,6 @@
 using UnityEngine;
+/* 스위치 누르면 블록이 기본 위치 - 목표 위치 움직이다가 
+  Player가 스위치에서 벗어나면 그자리에서 블록이 멈춤 */
 
 public class AutoBlock : MonoBehaviour
 {

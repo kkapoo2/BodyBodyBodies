@@ -1,76 +1,114 @@
 using UnityEngine;
+//스위치 없이 블럭 자동 이동
 
 public class MovingBlock : MonoBehaviour
 {
-    public Transform target1;
-    public Transform target2;
-    public float smoothTime = 0.3F;
-    private Vector2 velocity = Vector2.zero;
-    private bool moveToTarget = false;
-    private bool backToTarget = false;
-
-    private ButtonPushed buttonPushed;
-    public GameObject Button;
+    public float moveX = 0.0f;
+    public float moveY = 0.0f;
+    public float times = 0.0f;
+    public float weight = 0.0f;
+    public bool isMoveWhenOn = false;
 
 
+    public bool isCanMove = true;
+    float perDX;
+    float perDY;
+    Vector3 defPos;
+    bool isReverse = false;
     void Start()
     {
-        if (Button != null)
-        {
-            buttonPushed = Button.GetComponent<ButtonPushed>();
-        }
+        defPos = transform.position;
+        float timestep = Time.fixedDeltaTime;
+        perDX = moveX / (1.0f / timestep * times);
+        perDY = moveY / (1.0f / timestep * times);
+
+        if (isMoveWhenOn)
+            isCanMove = false;
     }
-    void Update()
+
+    private void FixedUpdate()
     {
 
-        if (buttonPushed != null)
+
+        if (isCanMove)
         {
-            // 버튼이 활성화되었는지 확인
-            if (!buttonPushed.Button.activeSelf)
+            float x = transform.position.x;
+            float y = transform.position.y;
+            bool endX = false;
+            bool endY = false;
+            if (isReverse)
             {
-                Debug.Log("버튼이 눌렸습니다!");
+                if ((perDX >= 0.0f && x <= defPos.x) || (perDX < 0.0f && x >= defPos.x))
+                {
+                    endX = true;
+                }
+                if ((perDY >= 0.0f && y <= defPos.y) || (perDY < 0.0f && y >= defPos.y))
+                {
+                    endY = true;
+                }
+                transform.Translate(new Vector3(-perDX, -perDY, defPos.z)); // 블럭 이동
+            }
+            else
+            {
+                if ((perDX >= 0.0f && x >= defPos.x + moveX) || (perDX < 0.0f && x <= defPos.x + moveX))
+                {
+                    endX = true;
+                }
+                if ((perDY >= 0.0f && y >= defPos.y + moveY) || (perDY < 0.0f && y <= defPos.y + moveY))
+                {
+                    endY = true;
+                }
+                Vector3 v = new Vector3(perDX, perDY, defPos.z);
+                transform.Translate(v);
+            }
+
+            if (endX && endY)
+            {
+                if (isReverse)
+                {
+                    transform.position = defPos;
+                }
+                isReverse = !isReverse;
+                isCanMove = false;
+                if (isMoveWhenOn == false)
+                {
+                    Invoke("Move", weight);
+                }
             }
         }
-        // 버튼  확인
-        if (buttonPushed != null && !buttonPushed.Button.activeSelf)
-        {
-            moveToTarget = true; // 목표 위치로 이동을 시작하도록 플래그 설정
-        }
-        else
-        {
-            backToTarget = true;
-        }
 
-        // 목표 위치로 이동 처리
-        if (moveToTarget)
+    }
+
+
+    public void Move()
+    {
+        isCanMove = true;
+    }
+
+    public void Stop()
+    {
+        isCanMove = false;
+    }
+
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (collision.gameObject.tag == "Player")
         {
-            Vector2 targetPosition = target1.TransformPoint(new Vector2(0, 0));
-
-            // 부드럽게 이동
-            transform.position = Vector2.SmoothDamp(transform.position, targetPosition, ref velocity, smoothTime);
-
-            // 목표 위치에 도달했으면 이동 중지
-            if (Vector2.Distance(transform.position, targetPosition) < 0.01f)
+            collision.transform.SetParent(transform);
+            if (isMoveWhenOn)
             {
-                moveToTarget = false; // 이동 완료 후 플래그 해제
-                transform.position = targetPosition; // 고정
-            }
-        }
-
-        // 돌아가기
-        if (backToTarget)
-        {
-            Vector2 targetPosition = target2.TransformPoint(new Vector2(0, 0));
-
-            // 부드럽게 이동
-            transform.position = Vector2.SmoothDamp(transform.position, targetPosition, ref velocity, smoothTime);
-
-            // 목표 위치에 도달했으면 이동 중지
-            if (Vector2.Distance(transform.position, targetPosition) < 0.01f)
-            {
-                backToTarget = false; // 이동 완료 후 플래그 해제
-                transform.position = targetPosition; // 고정
+                isCanMove = true;
             }
         }
     }
+
+    private void OnCollisionExit2D(Collision2D collision)
+    {
+        if (collision.gameObject.tag == "Player")
+        {
+            collision.transform.SetParent(null);
+        }
+    }
+
+
 }

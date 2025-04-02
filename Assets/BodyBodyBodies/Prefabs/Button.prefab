@@ -14,8 +14,8 @@ GameObject:
   - component: {fileID: 845780417967189286}
   - component: {fileID: 5072555832022870580}
   m_Layer: 8
-  m_Name: button
-  m_TagString: Untagged
+  m_Name: Button
+  m_TagString: Switch
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -194,6 +194,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a45f03c16a0e8ae48bbc1eff9d9e078c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  targetBlock: {fileID: 0}
+  targetAutoBlock: {fileID: 0}
+  targetMovingBlock: {fileID: 0}
   pushedSprite: {fileID: 8346901879194642381, guid: a485c636b48115a4ba762d5befaebc7d, type: 3}
   defaultSprite: {fileID: 2530564911472380330, guid: e0daeb1c632ca864da86d26fc64c90b8, type: 3}

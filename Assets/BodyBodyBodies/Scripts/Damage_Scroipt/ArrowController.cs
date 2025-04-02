@@ -2,20 +2,24 @@ using UnityEngine;
 
 public class ArrowController : MonoBehaviour
 {
-    public float deleteTime = 3.0f; //제거할 시간 지정
+    public float deleteTime = 2.0f; //제거할 시간 지정
 
     void Start()
     {
         Destroy(gameObject, deleteTime); //제거 설정
     }
 
-    void Update()
-    {
-        
-    }
-
+    
     void OnTriggerEnter2D(Collider2D collision)
     {
-        Destroy(gameObject); //무언가에 접촉하면 제거
+        if (collision.CompareTag("Player"))
+        {
+            collision.GetComponent<Player>().OnDamaged(transform.position); // 플레이어 사망 처리
+            Destroy(gameObject); // 화살 제거
+        }
+        else if (collision.CompareTag("Ground") || collision.CompareTag("Corpse"))
+        {
+            Destroy(gameObject); // 벽이나 적과 충돌하면 제거
+        }
     }
 }

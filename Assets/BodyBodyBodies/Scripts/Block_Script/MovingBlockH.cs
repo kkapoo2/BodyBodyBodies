@@ -1,140 +1,94 @@
+using System.Collections;
 using UnityEngine;
-
+/* 스위치를 누르면 기본 위치에서 목표 위치까지만 움직임
+   Player가 스위치에서 벗어나면 기본위치로 돌아감 */
 public class MovingBlockH : MonoBehaviour
 {
     public float moveX = 0.0f;
     public float moveY = 0.0f;
-    public float times = 0.0f;
-    public float weight = 0.0f;
-    public bool isMoveWhenOn = false;
+    public float moveSpeed = 2.0f;
 
-    private ButtonPushed buttonPushed;
-    public GameObject Button;
-
-    public bool isCanMove = true;
-    float perDX;
-    float perDY;
     Vector3 defPos;
-    bool isReverse = false;
+    Vector3 targetPos;
+
+    bool isMoving = false;   // 블록이 현재 이동 중인지 여부
+    bool isGoingUp = false;  // true면 목표 위치로 이동, false면 원래 위치로 이동
+
     void Start()
     {
-        if (Button != null)
-        {
-            buttonPushed = Button.GetComponent<ButtonPushed>();
-        }
-
         defPos = transform.position;
-        float timestep = Time.fixedDeltaTime;
-        perDX = moveX / (1.0f / timestep * times);
-        perDY = moveY / (1.0f / timestep * times);
-
-        if (isMoveWhenOn)
-            isCanMove = false;
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        if (buttonPushed != null)
-        {
-            //버튼이 활성화되었는지 확인
-            if (!buttonPushed.Button.activeSelf)
-            {
-                Debug.Log("버튼이 눌렸습니다!");
-            }
-        }
-
+        targetPos = defPos + new Vector3(moveX, moveY, 0);
     }
 
     private void FixedUpdate()
     {
-        if (buttonPushed != null && !buttonPushed.Button.activeSelf)
+        if(isGoingUp && !isMoving)
         {
-            isCanMove = true; // 버튼이 눌렸다면 움직임을 활성화
+            StopAllCoroutines();
+            StartCoroutine(MoveBlock(targetPos));   // 목표 위치로 이동
         }
-        else
+        else if (!isGoingUp && !isMoving)
         {
-            isCanMove = false;
-        }
-
-
-        if (isCanMove)
-        {
-            float x = transform.position.x;
-            float y = transform.position.y;
-            bool endX = false;
-            bool endY = false;
-            if (isReverse)
-            {
-                if ((perDX >= 0.0f && x <= defPos.x) || (perDX < 0.0f && x >= defPos.x))
-                {
-                    endX = true;
-                }
-                if ((perDY >= 0.0f && y <= defPos.y) || (perDY < 0.0f && y >= defPos.y))
-                {
-                    endY = true;
-                }
-                transform.Translate(new Vector3(-perDX, -perDY, defPos.z)); //블럭 이동
-            }
-            else
-            {
-                if ((perDX >= 0.0f && x >= defPos.x + moveX) || (perDX < 0.0f && x <= defPos.x + moveX))
-                {
-                    endX = true;
-                }
-                if ((perDY >= 0.0f && y >= defPos.y + moveY) || (perDY < 0.0f && y <= defPos.y + moveY))
-                {
-                    endY = true;
-                }
-                Vector3 v = new Vector3(perDX, perDY, defPos.z);
-                transform.Translate(v);
-            }
-
-            if (endX && endY)
-            {
-                if (isReverse)
-                {
-                    transform.position = defPos;
-                }
-                isReverse = !isReverse;
-                isCanMove = false;
-                if (isMoveWhenOn == false)
-                {
-                    Invoke("Move", weight);
-                }
-            }
+            StopAllCoroutines();
+            StartCoroutine(MoveBlock(defPos));  // 원래 위치로 이동
         }
 
     }
 
 
-    public void Move()
+    IEnumerator MoveBlock(Vector3 destination)
     {
-        isCanMove = true;
+        isMoving= true;
+
+        while (Vector3.Distance(transform.position, destination) > 0.1f)
+        {
+            transform.position = Vector3.MoveTowards(transform.position, destination, moveSpeed * Time.deltaTime);
+            yield return null;
+
+            // 이동 도중에 스위치가 꺼지면 즉시 원래 위치로 복귀
+            if (!isGoingUp && destination != defPos)
+            {
+                StartCoroutine(MoveBlock(defPos));
+                yield break;
+            }
+        }
+
+        transform.position = destination;
+        isMoving = false;
     }
 
-    public void Stop()
+    public void SetCanMove(bool canMove)
     {
-        isCanMove = false;
+        isGoingUp = canMove;
+
+        // 이동 도중에 스위치가 꺼지면 즉시 원래 위치로 복귀
+        if (!canMove && isMoving)
+        {
+            StopAllCoroutines();
+            StartCoroutine(MoveBlock(defPos));
+        }
     }
 
-    private void OnCollisionEnter2D(Collision2D collision)
+    private void OnTriggerEnter2D(Collider2D collision)
     {
-        if (collision.gameObject.tag == "Player")
+        if (collision.CompareTag("Player"))
         {
             collision.transform.SetParent(transform);
-            if (isMoveWhenOn)
-            {
-                isCanMove = true;
-            }
+        }
+        else if (collision.CompareTag("Switch"))
+        {
+            collision.transform.SetParent(transform);
+
         }
     }
 
-    private void OnCollisionExit2D(Collision2D collision)
+
+    private void OnTriggerExit2D(Collider2D collision)
     {
-        if (collision.gameObject.tag == "Player")
+        if (collision.CompareTag("Player") || collision.CompareTag("Switch") || collision.CompareTag("Corpse"))
         {
-            collision.transform.SetParent(null);
+            Rigidbody2D rb = collision.GetComponent<Rigidbody2D>();
+            if (rb != null) rb.linearVelocity = Vector2.zero;
         }
     }
 }

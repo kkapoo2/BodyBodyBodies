@@ -34,6 +34,7 @@ public class GameManager : MonoBehaviour
             stageIndex++;
             Stages[stageIndex].SetActive(true);
             PlayerReposition();
+
         }
 
         //스테이지 변경 후 초기화
@@ -49,12 +50,14 @@ public class GameManager : MonoBehaviour
     }
 
     //시체 제거
-    void DestroyAllCorpse()
+    public void DestroyAllCorpse()
     {
-        GameObject[] corpses = GameObject.FindGameObjectsWithTag("Corpse");
-        foreach (GameObject corpse in corpses)
+        GameObject corpseManager = GameObject.Find("Corpse Manager"); // Corpse Manager 찾기
+        if (corpseManager == null) return; // Corpse Manager가 없으면 그냥 리턴
+
+        foreach (Transform corpse in corpseManager.transform) // Corpse Manager의 모든 자식 확인
         {
-            Destroy(corpse);
+            Destroy(corpse.gameObject); // 자식 오브젝트만 삭제
         }
     }
 
@@ -66,6 +69,8 @@ public class GameManager : MonoBehaviour
             player.transform.position = respawn.transform.position;
         }
         player.VelocityZero();
+
+        
 
         Invoke("ResetJumpState", 0.1f);
     }

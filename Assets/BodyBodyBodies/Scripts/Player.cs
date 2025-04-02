@@ -62,15 +62,18 @@ public class Player : MonoBehaviour
         //E키 누르면 아이템 사용
         if (Input.GetKeyDown(KeyCode.E))
         {
-            UseItem(); //아이템 사용
+            SelfDie();
+            //UseItem(); //아이템 사용
+  
         }
 
         //R키 누르면 재시작
         if (Input.GetKeyDown(KeyCode.R))
         {
-            inventory.Clear();
-            GameManager.Instance.ResetItems();
+            //inventory.Clear();
+            //GameManager.Instance.ResetItems();
             gameManager.PlayerReposition();
+            gameManager.DestroyAllCorpse();
         }
 
 
@@ -97,7 +100,7 @@ public class Player : MonoBehaviour
         {
             Debug.DrawRay(rigid.position, Vector3.down, new Color(0, 1, 0));
 
-            RaycastHit2D rayHit = Physics2D.Raycast(rigid.position, Vector3.down, 1.2f, LayerMask.GetMask("Ground"));
+            RaycastHit2D rayHit = Physics2D.Raycast(rigid.position, Vector3.down, 1.0f, LayerMask.GetMask("Ground"));
 
             if (rayHit.collider != null)
             {
@@ -114,56 +117,49 @@ public class Player : MonoBehaviour
         {
             OnDamaged(collision.transform.position);
         }
+
+        if(collision.gameObject.layer == LayerMask.NameToLayer("Ground"))
+        {
+            anim.SetBool("isJumping", false);
+        }
+    }
+
+    //시체 생성
+    void CreateCorpse(GameObject corpsePrefab)
+    {
+        GameObject corpse = Instantiate(corpsePrefab, transform.position, Quaternion.identity);
+        GameObject corpseManager = GameObject.Find("Corpse Manager");
+        if (corpseManager != null)
+        {
+            corpse.transform.SetParent(corpseManager.transform, true);
+        }
+
     }
 
     //자의로 사망(물약마시기)
     public void SelfDie()
     {
-        //시체 생성
-        GameObject corpse = Instantiate(selfCorpse, transform.position, Quaternion.identity); 
-
-        //시체를 CorpseManager의 자식으로 설정
-        GameObject corpseManager = GameObject.Find("Corpse Manager");
-        if (corpseManager != null)
-        {
-            corpse.transform.SetParent(corpseManager.transform, true);
-        }
-
-        //투명화 해제
-        Invoke("OffDamaged", 0.5f);
-
-        //1초 뒤 플레이어 리스폰
+        CreateCorpse(selfCorpse);
+        gameObject.layer = 11;
+        spriteRenderer.color = new Color(1, 1, 1, 0.4f);
+        
+        // 0.5초 후 리스폰
         Invoke("RespawnPlayer", 0.5f);
+
     }
 
     //장애물로 사망(가시,화살)
     public void ObstacleDie()
     {
-        GameObject corpse = Instantiate(obstacleCorpse, transform.position, Quaternion.identity); //시체 생성
-        
-        //시체를 CorpseManager의 자식으로 설정
-        GameObject corpseManager = GameObject.Find("Corpse Manager");
-        if (corpseManager != null)
-        {
-            corpse.transform.SetParent(corpseManager.transform, true);
-        }
-
-        //투명화 해제
-        Invoke("OffDamaged", 0.5f);
-
-        //1초 뒤 플레이어 리스폰
-        Invoke("RespawnPlayer", 0.5f);
+        CreateCorpse(obstacleCorpse);
     }
 
-    
-    // 플레이어 리스폰 실행 함수\
-    void RespawnPlayer()
-    {
-        gameManager.PlayerReposition();
-    }
 
-    void OnDamaged(Vector2 targetPos)
+    public void OnDamaged(Vector2 targetPos)
     {
+        //시체 생성
+        ObstacleDie();
+
         // Change Layer (Imoratal Active)
         gameObject.layer = 11;
 
@@ -172,24 +168,30 @@ public class Player : MonoBehaviour
 
         //Reaction Force
         int dirc = transform.position.x - targetPos.x > 0 ? 1 : -1;
+        VelocityZero();
         rigid.AddForce(new Vector2(dirc, 1) * 7, ForceMode2D.Impulse);
 
         //Animation
         anim.SetTrigger("doDamaged");
 
-        //시체 생성
-        ObstacleDie();
-
-        
-
+        Invoke("RespawnPlayer", 0.5f);
     }
-
+   
     void OffDamaged()
     {
         gameObject.layer = 9;
         spriteRenderer.color = new Color(1, 1, 1, 1);
     }
 
+    // 플레이어 리스폰 실행 함수
+    void RespawnPlayer()
+    {
+        gameManager.PlayerReposition();
+        //투명화 해제
+        Invoke("OffDamaged", 0.5f);
+    }
+
+    /* 아이템 관련 코드 수정 필요
     //아이템 감지
     private void OnTriggerEnter2D(Collider2D collision)
     {
@@ -225,7 +227,7 @@ public class Player : MonoBehaviour
             Debug.Log("사용할 아이템이 없습니다!");
         }
     }
-
+    */
 
     //속도 0 설정
     public void VelocityZero()

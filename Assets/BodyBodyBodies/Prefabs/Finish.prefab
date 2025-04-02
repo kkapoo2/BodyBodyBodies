@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 3628393314467854835}
   m_Layer: 0
   m_Name: Finish
-  m_TagString: Untagged
+  m_TagString: Finish
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -148,3 +148,4 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   openDoorSprite: {fileID: 9087207327684497215, guid: 6c46559106500084d8e0a11884c81f23, type: 3}
+  closeDoorSprite: {fileID: 7569196456447642212, guid: 815500c0c2dd3f64b82f8b9242915e92, type: 3}

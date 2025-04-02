@@ -9,6 +9,7 @@ TagManager:
   - Item
   - Corpse
   - movingBlock
+  - Switch
   layers:
   - Default
   - TransparentFX
