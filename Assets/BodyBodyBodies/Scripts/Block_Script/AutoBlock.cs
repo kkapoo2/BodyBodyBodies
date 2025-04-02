@@ -4,82 +4,70 @@ public class AutoBlock : MonoBehaviour
 {
     public float moveX = 0.0f;
     public float moveY = 0.0f;
+    public float moveSpeed = 2.0f;
 
-    public float times = 0.0f;
-    public float weight = 0.0f;
+    Vector3 defPos;     // 기본 위치
+    Vector3 targetPos;  // 목표 위치
 
-    public bool isCanMove = false;
+    public bool isCanMove = false;  // 블록이 움직일 수 있는 상태인지 확인
+    public bool isMoving = false;   // 현재 블록이 이동 중인지 확인
+    bool isGoingUp = false;         // 현재 블록이 올라가는 중인지 확인
 
-    float perDX;
-    float perDY;
-    Vector3 defPos;
-    bool isReverse = false;
+    
     void Start()
     {
         defPos = transform.position;    // 초기 위치 저장
-        float timestep = Time.fixedDeltaTime;
-        perDX = moveX / (1.0f / timestep * times); // 이동 속도 설정
-        perDY = moveY / (1.0f / timestep * times);
-
+        targetPos = defPos + new Vector3(moveX, moveY, 0);  //목표 위치 설정
     }
 
     private void FixedUpdate()
     {
-
-        if (isCanMove)
+        if (isCanMove && !isMoving)
         {
-            float x = transform.position.x;
-            float y = transform.position.y;
-            bool endX = false;
-            bool endY = false;
-
-            if (isReverse)
-            {
-                if ((perDX >= 0.0f && x <= defPos.x) || (perDX < 0.0f && x >= defPos.x))
-                {
-                    endX = true;
-                }
-                if ((perDY >= 0.0f && y <= defPos.y) || (perDY < 0.0f && y >= defPos.y))
-                {
-                    endY = true;
-                }
-                transform.Translate(new Vector3(-perDX, -perDY, defPos.z)); //블럭 이동
-            }
-            else
-            {
-                if ((perDX >= 0.0f && x >= defPos.x + moveX) || (perDX < 0.0f && x <= defPos.x + moveX))
-                {
-                    endX = true;
-                }
-                if ((perDY >= 0.0f && y >= defPos.y + moveY) || (perDY < 0.0f && y <= defPos.y + moveY))
-                {
-                    endY = true;
-                }
-                Vector3 v = new Vector3(perDX, perDY, defPos.z);
-                transform.Translate(v);
-            }
-
-            if (endX && endY)
-            {
-                if (isReverse)
-                {
-                    transform.position = defPos;
-                }
-                isReverse = !isReverse;
-                isCanMove = false;
-            }
+            StartCoroutine(MoveBlock());
         }
 
     }
 
-    public void Move()
+    System.Collections.IEnumerator MoveBlock()
     {
-        isCanMove = true;
+        isMoving = true;
+
+        while (isCanMove)
+        {
+            Vector3 destination = isGoingUp ? targetPos : defPos;   // 올라갈 때오 내려올 때 목적지 설정
+
+            while (Vector3.Distance(transform.position, destination) > 0.1f)
+            {
+                if(!isCanMove)
+                    yield break;
+
+                transform.position = Vector3.MoveTowards(transform.position, destination, moveSpeed * Time.deltaTime);
+                yield return null;
+            }
+
+            if (!isCanMove)
+                yield break;
+
+            // 방향 전환
+            isGoingUp = !isGoingUp;
+
+            yield return new WaitForSeconds(0.5f);
+        }
+
+        isMoving = false;
+        
     }
 
-    public void Stop()
+    public void SetCanMove(bool canMove)
     {
-        isCanMove = false;
+        isCanMove = canMove;
+
+        if (!canMove)
+        {
+            isMoving = false;   //이동을 멈출 때 이동 중 상태도 해제
+            StopAllCoroutines();
+        }
     }
 
     private void OnCollisionEnter2D(Collision2D collision)
