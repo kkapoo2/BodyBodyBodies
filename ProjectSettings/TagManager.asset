@@ -10,6 +10,7 @@ TagManager:
   - Corpse
   - movingBlock
   - Switch
+  - Cannon
   layers:
   - Default
   - TransparentFX

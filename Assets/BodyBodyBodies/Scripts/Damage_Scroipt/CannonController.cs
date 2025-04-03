@@ -12,10 +12,12 @@ public class CannonController : MonoBehaviour
     GameObject player;                  // 플레이어
     GameObject gateObj;                 // 발사구
     bool isFiring = false;               // 발사 가능 여부
-
+    GameManager gameManager;
 
     void Start()
     {
+        gameManager = GetComponent<GameManager>();
+
         // 대포의 발사 위치(Gate) 찾기
         Transform tr = transform.Find("Gate");
         if (tr != null)
@@ -28,8 +30,13 @@ public class CannonController : MonoBehaviour
 
     }
 
-    void Update()
+    void FixedUpdate()
     {
+        if (gameManager != null && gameManager.isStageComplete)
+        {
+            return;
+        } 
+
         if (player == null || gateObj == null || objPrefab == null) return;
 
         // 플레이어가 감지 범위 안에 있으면 발사 허용
@@ -71,5 +78,11 @@ public class CannonController : MonoBehaviour
     bool CheckLength(Vector2 targetPos)
     {
         return Vector2.Distance(transform.position, targetPos) <= length;
+    }
+
+    void OnDisable()
+    {
+        CancelInvoke(nameof(FireArrow)); // 스테이지 변경될 때 화살 발사 중지
+        isFiring = false;
     }
 }
